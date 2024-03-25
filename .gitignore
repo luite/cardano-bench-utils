@@ -1,0 +1,12 @@
+/.vscode
+/cabal-dir.tmp
+/cardano-node.location.txt
+/cnode
+/configs/generated/*.project
+/configs/*.project
+/lib.orig
+/lib.opt
+/ghc/ghc-*
+/ghc/ghc-pkg-*
+/dist-*
+/cardano-node

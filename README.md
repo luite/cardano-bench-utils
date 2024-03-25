@@ -3,9 +3,8 @@
 ## Introduction
 
 This is a collection of small utilities that I used to analyze a regression
-in the `cardano-node` software. The utilities are not yet ready for general
-use, but we may eventually make full ..., or merge the functionality into
-existing profiling tools.
+in the `cardano-node` software. Some of the functionality may be integrated
+in existing tools or converted into standalone profiling tools in the future.
 
 ## Preparation
 
@@ -14,11 +13,10 @@ existing profiling tools.
 For building `cardano-node`, you need the following
 libraries visible through `pkg-config`:
 
-    * `libsecp256k1`
-    * `libsodium`
-    * `libblst`
-    * `OpenSSL`
-
+- `libsecp256k1`
+- `libsodium`
+- `libblst`
+- `openssl`
 
 ### GHC
 
@@ -92,7 +90,7 @@ Or you can run all the configurations for a single profile:
 cabal run run-bench solo all
 ```
 
-# Implementation Nodes/Remarks
+# Implementation Notes/Remarks
 
 This package is experimental and was put together quickly during an
 investigation of `cardano-node` performance. There are some implementation
