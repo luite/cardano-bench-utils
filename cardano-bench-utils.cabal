@@ -1,0 +1,71 @@
+cabal-version:      3.0
+name:               cardano-bench-utils
+version:            0.1.0.0
+license:            BSD-2-Clause
+license-file:       LICENSE
+author:             Luite Stegeman
+maintainer:         luite.stegeman@iohk.io
+category:           Development
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+                    README.md
+                    configs/generated/README.md
+                    ghc/README.md
+
+extra-source-files:
+                    configs/include/*.project                    
+
+common warnings
+    ghc-options: -Wall
+
+executable run-bench
+    import:           warnings
+    main-is:          Main.hs
+    build-depends:    base ^>=4.18.2.0,
+                      cardano-bench-utils,
+                      filepath,
+                      directory,
+                      process
+    hs-source-dirs:   run-bench
+    default-language: Haskell2010
+
+executable filter-event-log
+    import:           warnings
+    main-is:          Main.hs
+    build-depends:    base ^>=4.18.2.0,
+                      ghc-events,
+                      text
+    hs-source-dirs:   filter-eventlog
+    default-language: Haskell2010
+
+executable filter-callgraph
+    import:           warnings
+    main-is:          Main.hs
+    build-depends:    base ^>=4.18.2.0,
+                      text,
+                      containers
+    hs-source-dirs:   filter-callgraph
+    default-language: Haskell2010
+
+executable localize-dependencies
+    import:           warnings
+    main-is:          Main.hs
+    build-depends:    base ^>=4.18.2.0,
+                      cardano-bench-utils,
+                      directory,
+                      filepath,
+                      process,
+                      containers
+    hs-source-dirs:   localize-dependencies
+    default-language: Haskell2010
+
+library
+    import:           warnings
+    exposed-modules:  Utils
+    build-depends:    base ^>=4.18.2.0,
+                      directory,
+                      filepath,
+                      process,
+                      containers
+    hs-source-dirs:   common
+    default-language: Haskell2010

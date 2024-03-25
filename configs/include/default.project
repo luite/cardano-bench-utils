@@ -1,0 +1,101 @@
+-- some default options to make everything compile
+-- these are included in all benchmark configurations
+
+
+program-options
+  ghc-options: -Wwarn
+
+tests: false
+benchmarks: false
+
+allow-newer:
+  ouroboros-consensus-diffusion:* ,
+  ouroboros-consensus-protocol:*,
+  small-steps:*,
+  sop-core:*,
+  free:*,
+  algebraic-graphs:transformers,
+  ansi-wl-pprint:ansi-terminal,
+  attoparsec:ghc-prim,
+  base64-bytestring-type:*,
+  cabal-doctest:*,
+  cardano-crypto-wrapper:base,
+  cassava:base,
+  comonad:transformers,
+  constraints-extras:*,
+  data-fix:*,
+  dec:*,
+  deriving-aeson:*,
+  distributive:*,
+  errors:*,
+  generically:*,
+  FailT:*,
+  indexed-traversable-instances:*,
+  integer-logarithms:*,
+  io-streams-haproxy:*,
+  mmorph:*,
+  monoidal-containers:*,
+  newtype:*,
+  non-integral:*,
+  old-locale:*,
+  openssl-streams:*,
+  ekg-forward:*,
+  parallel:*,
+  MonadRandom:*,
+  io-streams:*,
+  profunctors:*,
+  ral:*,
+  readable:*,
+  regex-base:*,
+  regex-posix:*,
+  resourcet:*,
+  libyaml:*,
+  scientific:*,
+  semigroupoids:*,
+  adjunctions:*,
+  either:*,
+  kan-extensions:*,
+  show-combinators:*,
+  some:*,
+  dependent-sum:*,
+  strict-checked-vars:*,
+  text-short:*,
+  bifunctors:*,
+  th-compat:*,
+  th-expand-syns:*,
+  th-orphans:*,
+  time-compat:*,
+  tree-diff:*,
+  type-equality:*,
+  typed-protocols:*,
+  snap-core:*,
+  snap-server:*,
+  unliftio-core:*,
+  vector-algorithms:*,
+  vector-binary-instances:*,
+  vector-map:*,
+  vector-stream:*,
+  vector-th-unbox:*,
+  witherable:*,
+  wl-pprint-annotated:*,
+  zlib:*,
+  plutus-core:*,
+  tasty-discover:*,
+  tasty-bench:*,
+  plutus-core:nothunks,
+  ghc-paths:*,
+  cryptohash-md5:*,
+  cryptohash-sha1:*,
+  pipes:*,
+  unordered-containers:*,
+  uuid:*,
+  entropy:*
+
+allow-older:
+  ouroboros-network-api:network-mux
+
+package HsOpenSSL
+   flags: +use-pkg-config
+
+package cardano-crypto-praos
+   flags: -external-libsodium-vrf

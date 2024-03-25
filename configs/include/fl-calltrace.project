@@ -1,0 +1,3 @@
+executable-stripping: false
+library-stripping: false
+debug-info: 3

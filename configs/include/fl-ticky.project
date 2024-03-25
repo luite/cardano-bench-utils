@@ -1,0 +1,6 @@
+
+program-options
+    ghc-options: -ddump-stg-cg -ddump-to-file -ticky--ticky-allocd -ticky-dyn-thunk -ticky-ap-thunk
+
+package *
+    ghc-options: -ddump-stg-cg -ddump-to-file -ticky--ticky-allocd -ticky-dyn-thunk -ticky-ap-thunk

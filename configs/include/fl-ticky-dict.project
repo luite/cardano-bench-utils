@@ -1,0 +1,5 @@
+
+program-options
+    ghc-options: -ddump-stg-cg -ddump-to-file -ticky-dict
+package *
+    ghc-options: -ddump-stg-cg -ddump-to-file -ticky-dict
