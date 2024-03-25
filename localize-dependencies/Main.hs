@@ -58,6 +58,8 @@ excludedPackages = S.fromList [ "splitmix"
                               , "tasty-expected-failure"
                               , "libsystemd-journal"
                               , "megaparsec"
+                              , "happy"
+                              , "hsc2hs"
                               ]
 
 runCabal :: FilePath -> FilePath -> [String] -> IO ()
