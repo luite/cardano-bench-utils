@@ -190,7 +190,7 @@ printExceptions x = x `E.catch` \(e::E.SomeException) ->
     putStrLn ("exception: " ++ show e) >> E.throwIO e
 
 imp :: Handle -> String -> String -> IO ()
-imp h from c = hPutStrLn h ("import: " ++ from ++ "/" ++ c ++ ".project") 
+imp h from c = hPutStrLn h ("import: " ++ from ++ "/" ++ c ++ ".project")
 
 writeCabalConfig :: FilePath -> Config -> IO ()
 writeCabalConfig cfg_file cfg = withFile cfg_file WriteMode $ \h -> do
@@ -199,7 +199,7 @@ writeCabalConfig cfg_file cfg = withFile cfg_file WriteMode $ \h -> do
   imp h "generated" ("ghc-" ++ ghcName (cGhc cfg))
   case cLibs cfg of
     Orig    -> imp h "generated" "libs-orig"
-    Opt     -> imp h "generated" "libs-opt" 
+    Opt     -> imp h "generated" "libs-opt"
   forM_ (cFlavour cfg) $ \case
       Vanilla    -> imp h "include" "fl-vanilla"
       Perf       -> imp h "include" "fl-perf"
@@ -209,11 +209,11 @@ writeCabalConfig cfg_file cfg = withFile cfg_file WriteMode $ \h -> do
       TickyDict  -> imp h "include" "fl-ticky-dict"
       TraceCalls -> imp h "include" "fl-trace-calls"
 
-{- 
+{-
     we need to adjust cardano-node-service.nix a little to:
       - run our own cardano-node instead of the one built by nix
       - pass the correct RTS flags for the type of run we're doing
- -}   
+ -}
 patchServiceFile :: Config -> IO ()
 patchServiceFile cfg = do
     let serviceFile = "nix/nixos/cardano-node-service.nix"
@@ -281,8 +281,14 @@ runBench pr cfg = do
     renameDirectory ("cardano-node/run" </> origName)
                     ("cardano-node/run" </> origName ++ "_" ++ configName cfg)
 
+    -- make sure no stray processes are left
+
     putStrLn ("finished bench: " ++ profileName pr ++ " " ++ configName cfg)
 
+
+forceKill :: String -> IO ()
+forceKill process_name = runIn' "." "killall" ["-9", process_name] `E.catch`
+  \(_::ExitCode) -> pure () -- killall will return a non-zero exit status if there are no processes killed. Just ignore that
 
 postProcess :: Config -> FilePath -> IO ()
 postProcess cfg nodepath = do
@@ -303,6 +309,10 @@ postProcess cfg nodepath = do
     runIn' "." "cabal" ["run", "filterlog", nodepath </> "cnode.eventlog", nodepath </> "cnode.filtered.eventlog"]
     runIn' nodepath e2h ["cnode.eventlog"]
     runIn' nodepath e2h ["cnode.filtered.eventlog"]
+
+  -- kill any remaining stray processes
+  forceKill "cardano-tracer"
+  -- XXX add more here if we see runs interrupted by different strays
 
   -- remove things that use unnecessary space
   cleanupNodeDir nodepath
