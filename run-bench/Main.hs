@@ -80,8 +80,8 @@ flavourRtsFlags Vanilla    = []
 flavourRtsFlags Perf       = []
 flavourRtsFlags ProfLate   = ["-pj"]
 flavourRtsFlags StgStacks  = ["-A1m", "--enable-gc-stack-dumps"] -- more GCs since we get a stack trace for each GC
-flavourRtsFlags Ticky      = []
-flavourRtsFlags TickyDict  = []
+flavourRtsFlags Ticky      = ["-lT" ]
+flavourRtsFlags TickyDict  = ["-lT" ]
 flavourRtsFlags TraceCalls = ["-A1m", "--enable-call-graph-tracing" ] -- reduce memory
 
 -- the test profile
