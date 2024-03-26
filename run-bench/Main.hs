@@ -308,7 +308,7 @@ postProcess cfg nodepath = do
   haveEventlog <- doesFileExist (nodepath </> "cnode.eventlog")
   when haveEventlog $ do
     e2h <- maybe (die "'eventlog2html' not found") pure =<< getEventlog2html
-    runIn' "." "cabal" ["run", "filterlog", nodepath </> "cnode.eventlog", nodepath </> "cnode.filtered.eventlog"]
+    runIn' "." "cabal" ["run", "filter-eventlog", nodepath </> "cnode.eventlog", nodepath </> "cnode.filtered.eventlog"]
     runIn' nodepath e2h ["cnode.eventlog"]
     runIn' nodepath e2h ["cnode.filtered.eventlog"]
 

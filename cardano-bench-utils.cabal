@@ -29,7 +29,7 @@ executable run-bench
     hs-source-dirs:   run-bench
     default-language: Haskell2010
 
-executable filter-event-log
+executable filter-eventlog
     import:           warnings
     main-is:          Main.hs
     build-depends:    base ^>=4.18.2.0,
