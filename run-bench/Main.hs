@@ -82,7 +82,7 @@ flavourRtsFlags ProfLate   = ["-pj"]
 flavourRtsFlags StgStacks  = ["-A1m"] -- more GCs since we get a stack trace for each GC
 flavourRtsFlags Ticky      = []
 flavourRtsFlags TickyDict  = []
-flavourRtsFlags TraceCalls = ["-A1m"] -- reduce memory 
+flavourRtsFlags TraceCalls = ["-A1m", "--enable-call-graph-tracing" ] -- reduce memory
 
 -- the test profile
 data Profile = Default
