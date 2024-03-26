@@ -79,7 +79,7 @@ flavourRtsFlags :: Flavour -> [String]
 flavourRtsFlags Vanilla    = []
 flavourRtsFlags Perf       = []
 flavourRtsFlags ProfLate   = ["-pj"]
-flavourRtsFlags StgStacks  = ["-A1m"] -- more GCs since we get a stack trace for each GC
+flavourRtsFlags StgStacks  = ["-A1m", "--enable-gc-stack-dumps"] -- more GCs since we get a stack trace for each GC
 flavourRtsFlags Ticky      = []
 flavourRtsFlags TickyDict  = []
 flavourRtsFlags TraceCalls = ["-A1m", "--enable-call-graph-tracing" ] -- reduce memory
@@ -101,6 +101,8 @@ configs = [ Config Ghc8107 Orig [Vanilla]
           , Config Ghc964  Opt  [ProfLate]
           , Config Ghc964  Orig [TraceCalls]
           , Config Ghc964  Opt  [TraceCalls]
+          , Config Ghc964  Orig [StgStacks]
+          , Config Ghc964  Opt  [StgStacks]
           ]
 
 checkPrepareDirectory :: IO ()
