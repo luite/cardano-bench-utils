@@ -40,12 +40,10 @@ depend on the eventlog.
 ### Cardano-node
 
 The `cardano-node` directory needs to contain a source repository of the
-cardano node project. Be sure to use the correct branch. The
-`luite/872-ghc96-profiles` contains the benchmark profile for `solo`
-and `solo-xs`:
+cardano node project. Be sure to use the correct branch.
 
 ```
-$ git clone --branch=luite/872-ghc96-profiles https://github.com/IntersectMBO/cardano-node.git
+$ git clone https://github.com/IntersectMBO/cardano-node.git
 ```
 
 ### Haskell dependencies
