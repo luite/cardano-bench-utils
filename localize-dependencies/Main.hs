@@ -98,6 +98,7 @@ main = do
     cardano_node_exists <- doesFileExist "cardano-node/cardano-node/cardano-node.cabal"
     unless cardano_node_exists (die "please initialize a cardano-node source repository in the cardano-node directory")
 
+    removePathForcibly tmpDir
     createDirectoryIfMissing True tmpDir
 
     -- download all the dependencies of cardano-node to a fresh cabal config dir    
