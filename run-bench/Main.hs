@@ -252,6 +252,13 @@ runBench pr cfg = do
                     ]
     runIn' "cardano-node" "cabal" (["build", "exe:cardano-node", "-j"] ++ cabalLocs)
 
+    when (cLibs cfg == Opt) $
+      runIn "." "diff" (Just "run-bench-opt-libs.patch") ["-ur", libDir Orig, libDir Opt ] `E.catch`
+        \(e::ExitCode) -> case e of
+                            ExitSuccess   -> pure ()
+                            ExitFailure 1 -> pure ()      -- diff exits with status 1 if there are differences, it's not an error condition
+                            _             -> E.throwIO e
+
     -- symlink 'cnode' to the executable we just built
     removeItemIfExists "cardano-node.location.txt"
     removeItemIfExists "cnode"
@@ -298,12 +305,8 @@ postProcess cfg nodepath = do
   writeFile (nodepath </> "config.txt") (show cfg)
 
   -- write library diffs:
-  when (cLibs cfg == Opt) $ do
-    (runIn "." "diff" (Just (nodepath </> "libs.patch")) ["-ur", libDir Orig, libDir Opt ]) `E.catch`
-      \(e::ExitCode) -> case e of
-                          ExitSuccess   -> pure ()
-                          ExitFailure 1 -> pure ()      -- diff exits with status 1 if there are differences, it's not an error condition
-                          _             -> E.throwIO e
+  when (cLibs cfg == Opt) (copyFile "run-bench-opt-libs.patch" (nodepath </> "libs.patch"))
+
   -- if we have an eventlog file, filter it to get mempool snapshot events
   haveEventlog <- doesFileExist (nodepath </> "cnode.eventlog")
   when haveEventlog $ do

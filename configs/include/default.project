@@ -9,6 +9,17 @@ tests: false
 benchmarks: false
 
 allow-newer:
+  foldl:*,
+  dependent-map:*,
+  servant-server:*,
+  dictionary-sharing:*,
+  hedgehog:*,
+  fs-api:*,
+  aeson:*,
+  integer-conversion:*,
+  nonempty-vector:*,
+  pipes-safe:*,
+  quickcheck-instances:*,
   ouroboros-consensus-diffusion:* ,
   ouroboros-consensus-protocol:*,
   small-steps:*,
