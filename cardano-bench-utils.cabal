@@ -56,7 +56,9 @@ executable localize-dependencies
                       directory,
                       filepath,
                       process,
-                      containers
+                      containers,
+                      text,
+                      cabal-plan
     hs-source-dirs:   localize-dependencies
     default-language: Haskell2010
 

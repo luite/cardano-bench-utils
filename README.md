@@ -67,11 +67,9 @@ corresponding `config/generated/libs-orig.project` and
 cabal run localize-dependencies
 ```
 
-Note: Because of a limitation in the `localize-dependencies` program, updates
-to `.cabal` metadata that may be present on the `hackage` and `CHaP`
-repositories are not included in the `libs.orig` and `libs.old` directories.
-If version constraints can't be solved because of this, add packages to the
-`allow-newer` section in the `configs/include/default.project`.
+Note: You may need to add more packages to the `excludedPackages` list
+in `localize-dependencies/Main.hs`, for example if the `cardano-node`
+repository adds more packages or if a new dependency cycle is introduced.
 
 # Usage
 

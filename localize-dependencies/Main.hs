@@ -20,6 +20,12 @@
           from libs.orig into the cabal project
       - configs/generated/libs-opt.project: project file pulling everything
           from libs.opt into the cabal project
+
+   TODO:
+
+       Some of this file is a hack around `cabal fetch` not being project file
+       aware. We should really implement the functionality in cabal-install
+       so that cabal fetch` can unpack all dependencies of the current project
  -}
 module Main where
 
@@ -31,11 +37,13 @@ import Control.Monad
 import System.FilePath
 import Control.Exception
 import System.Environment
-import Data.Maybe
 import qualified Data.List as L
 import Data.Set(Set)
 import qualified Data.Set as S
 import Utils
+import qualified Cabal.Plan as Plan
+import qualified Data.Map as M
+import qualified Data.Text as T
 
 tmpDir :: FilePath
 tmpDir = "cabal-dir.tmp"
@@ -52,7 +60,47 @@ projectDir = "configs"
   selected depending on the configuration.
  -}
 excludedPackages :: Set String
-excludedPackages = S.fromList [ "splitmix"
+excludedPackages = S.fromList [ -- GHC boot libraries
+                               "Cabal"
+                              , "Cabal-syntax"
+                              , "array"
+                              , "base"
+                              , "binary"
+                              , "bytestring"
+                              , "containers"
+                              , "deepseq"
+                              , "directory"
+                              , "exceptions"
+                              , "filepath"
+                              , "ghc"
+                              , "ghc-bignum"
+                              , "ghc-boot"
+                              , "ghc-boot-th"
+                              , "ghc-compact"
+                              , "ghc-heap"
+                              , "ghc-prim"
+                              , "ghci"
+                              , "haskeline"
+                              , "hpc"
+                              , "integer-gmp"
+                              , "integer-simple"
+                              , "libiserv"
+                              , "mtl"
+                              , "parsec"
+                              , "pretty"
+                              , "process"
+                              , "rts"
+                              , "stm"
+                              , "system-cxx-std-lib"
+                              , "template-haskell"
+                              , "terminfo"
+                              , "text"
+                              , "time"
+                              , "transformers"
+                              , "unix"
+                              , "xhtml"
+                              -- other packages to prevent dependency cycles
+                              , "splitmix"
                               , "split"
                               , "tasty"
                               , "tasty-expected-failure"
@@ -60,7 +108,37 @@ excludedPackages = S.fromList [ "splitmix"
                               , "megaparsec"
                               , "happy"
                               , "hsc2hs"
+                              , "Win32-network"
+                              -- cardano packages from cardano-node/cabal.project
+                              , "cardano-node"
+                              , "cardano-node-capi"
+                              , "cardano-node-chairman"
+                              , "cardano-submit-api"
+                              , "cardano-testnet"
+                              , "cardano-tracer"
+                              , "cardano-topology"
+                              , "locli"
+                              , "plutus-scripts-bench"
+                              , "tx-generator"
+                              , "trace-dispatcher"
+                              , "trace-resources"
+                              , "trace-forward"
                               ]
+
+{-
+This appends cardano-node/cabal.project to our temporary
+cabal configuration file. It's a workaround for `cabal get` not supporting
+project files.
+
+Not everything from the project file is supported in the cabal configuration,
+so this results in some (harmless) warnings.
+ -}
+addRepositories :: FilePath -> FilePath -> IO ()
+addRepositories cardanoNodePath cabalConfig = do
+  config <- readFile' cabalConfig
+  unless ("cardano-haskell-packages" `L.isInfixOf` config) $ do
+    project <- readFile (cardanoNodePath </> "cabal.project")
+    appendFile cabalConfig ('\n':project)
 
 runCabal :: FilePath -> FilePath -> [String] -> IO ()
 runCabal config_dir working_dir args = do
@@ -74,22 +152,6 @@ runCabal config_dir working_dir args = do
             _           -> throwIO ec
   run_and_wait
 
-
-findFilesWithExtension :: FilePath -> String -> IO [FilePath]
-findFilesWithExtension dir ext = do
-    entries <- listDirectory dir
-    concat <$> forM entries processEntry
-    where
-        processEntry rel_entry = do
-            let entry = dir </> rel_entry
-            is_dir <- doesDirectoryExist entry
-            is_file <- doesFileExist entry
-            if is_dir
-              then findFilesWithExtension entry ext
-              else if is_file
-                   then (pure (if ext `isExtensionOf` entry then [entry] else []))
-                   else pure []
-
 main :: IO ()
 main = do
     -- check that we have everything in the right location
@@ -101,73 +163,51 @@ main = do
     removePathForcibly tmpDir
     createDirectoryIfMissing True tmpDir
 
-    -- download all the dependencies of cardano-node to a fresh cabal config dir    
+    -- download all the dependencies of cardano-node to a fresh cabal config dir
     cabalDir <- makeAbsolute tmpDir
     cardanoDir <- makeAbsolute "cardano-node"
+    let buildDir = "dist-newstyle.empty-builddir"
+    removePathForcibly (cardanoDir </> buildDir)
 
     runCabal cabalDir cardanoDir ["update"]
-    -- XXX perhaps we should do this with an empty package db to be sure we get everything?
-    runCabal cabalDir cardanoDir ["build", "exe:cardano-node", "--only-download", "--force-reinstalls", "--builddir=dist-newstyle.empty-builddir"]
-    
-    {-
-       "cabal get" doesn't appear to find the packages we just downloaded
-       perhaps it's not project file aware?
+    addRepositories cardanoDir (cabalDir </> "config")
+    runCabal cabalDir cardanoDir ["update"]
 
-       instead we just scan for all tar.gz files in our temp directory.
-       unfortunately this means that we miss out on cabal file updates
-       that may exist in the repositories
-     -}
-    pkg_archives <- findFilesWithExtension tmpDir ".tar.gz"
-    
-    {-
-       extract all dependencies to the lib and lib.orig subdirs
-       the lib.orig subdir should remain unmodified and serve as a baseline
-       for benchmarks
-     -}
-    _ <- catMaybes <$> forM pkg_archives (extractPackage "lib.orig")
-    pkg_names <- filter (`S.notMember` excludedPackages) . L.sort . catMaybes <$>
-         forM pkg_archives (extractPackage "lib.opt")
-    removeItemIfExists "lib.opt/.git"
+    runCabal cabalDir cardanoDir ["build", "cardano-node", "--only-download", "--force-reinstalls", "--builddir=" ++ buildDir]
+
+    let planFile = cardanoDir </> "dist-newstyle.empty-builddir/cache/plan.json"
+    plan <- Plan.findAndDecodePlanJson (Plan.ExactPath planFile)
+    let pkgs0 = getPackageList plan
+        pkgs  = filter (\pkg -> pkgNameString pkg `S.notMember` excludedPackages) pkgs0
+        pkg_names = map pkgNameString pkgs
+        cabalExtractPackage tgtDir pkg = do
+          createDirectoryIfMissing True tgtDir
+          runCabal cabalDir cardanoDir ["get", pkgString pkg, "-d", ".." </> tgtDir]
+          renameDirectory (tgtDir </> pkgString pkg) (tgtDir </> pkgNameString pkg) -- drop version
+
     forM_ ["lib.orig", "lib.opt"] $ \lib -> do
+      forM_ pkgs (cabalExtractPackage lib)
       runIn' lib "git" ["init"]
       runIn' lib "git" ["add", "."]
       runIn' lib "git" ["commit", "-m", "import"]
 
-    -- generate the project files that pull the dependencies into the project
-    createDirectoryIfMissing True projectDir
     writeProject (projectDir </> "generated" </> "libs-orig.project") "../lib.orig" pkg_names
     writeProject (projectDir </> "generated" </> "libs-opt.project") "../lib.opt" pkg_names
 
+pkgNameString :: Plan.PkgId -> String
+pkgNameString (Plan.PkgId (Plan.PkgName pkgName) _ ) = T.unpack pkgName
+
+pkgString :: Plan.PkgId -> String
+pkgString (Plan.PkgId (Plan.PkgName pkgName) (Plan.Ver pkgVer)) =
+  T.unpack pkgName ++ "-" ++ L.intercalate "." (map show pkgVer)
+
+getPackageList :: Plan.PlanJson -> [Plan.PkgId]
+getPackageList plan = S.toList . S.fromList $ map Plan.uPId (M.elems (Plan.pjUnits plan))
 
 writeProject :: FilePath -> String -> [String] -> IO ()
 writeProject project_file prefix pkgs = withFile project_file WriteMode $ \h -> do
     hPutStrLn h "packages:"
     forM_ pkgs $ \pkg -> hPutStrLn h ("    " ++ prefix ++ "/" ++ pkg)
-
-extractPackage :: FilePath -> FilePath -> IO (Maybe String)
-extractPackage lib_dir archive
-  | Just (pkgname, version) <- getPkgNameVersion archive
-  = do
-      putStrLn ("Extracting `" ++ pkgname ++ "' version " ++ version ++ " (" ++ archive ++ ")")
-      let target = lib_dir </> pkgname
-      createDirectoryIfMissing True target
-      _ <- rawSystem "tar" ["-C", target, "--strip-components", "1", "-xzf", archive]
-      pure (Just pkgname)
-  | otherwise = do
-      putStrLn ("Skipping " ++ archive)
-      pure Nothing
-
-getPkgNameVersion :: FilePath -> Maybe (String, String)
-getPkgNameVersion archive
-  | isVersion rver && not (null rname) = Just (reverse rname, reverse rver)
-  | otherwise = Nothing
-    where
-      isVersion xs = not (null xs) && all isVersionChar xs
-      isVersionChar c = c `elem` "0123456789."
-
-      basename = dropExtension (takeBaseName archive)
-      (rver, rname0) = break (=='-') (reverse basename)
-      rname = drop 1 rname0 -- get rid of the dash
 
 {-
 
@@ -181,7 +221,7 @@ cabal freeze
     - customize the prefix and repositories variables to match your local
       cabal cache
     - run this script to extract the dependencies to the lib subdirectory
-    - add the output of this script to the packages list in the 
+    - add the output of this script to the packages list in the
       cabal.project fil
 
 -}
