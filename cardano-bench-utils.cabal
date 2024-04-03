@@ -25,6 +25,7 @@ executable run-bench
                       cardano-bench-utils,
                       filepath,
                       directory,
+                      split,
                       process
     hs-source-dirs:   run-bench
     default-language: Haskell2010

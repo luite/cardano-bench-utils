@@ -28,6 +28,7 @@ import qualified Data.List as L
 import Data.Maybe
 import qualified Control.Exception as E
 
+import Data.List.Split (splitOn)
 import Utils
 
 -- XXX prefix
@@ -129,7 +130,7 @@ checkPrepareDirectory = do
 
 usage :: IO ()
 usage = do
-    hPutStrLn stderr "usage: run-bench <profile> <config|all>"
+    hPutStrLn stderr "usage: run-bench <profile> <config|all>[,config,config,...]"
     hPutStrLn stderr ""
     hPutStrLn stderr "Available profiles:"
     forM_  (enumFrom Default) $ \p -> hPutStrLn stderr ("    " ++ profileName p)
@@ -177,15 +178,22 @@ main = do
     checkPrepareDirectory
     args <- getArgs
     case args of
-        [profile, cfg]
+        [profile, cfgs]
           | Just p <- L.find (\p -> profileName p == profile) (enumFrom Default)
-          , Just c <- L.find (\c -> configName c == cfg) configs
-          -> printExceptions (runBench p c)
+          , Just cs <- parseConfigs cfgs
+          -> printExceptions (forM_ cs (runBench p))
         [profile, "all"]
           | Just p <- L.find (\p -> profileName p == profile) (enumFrom Default) -> do
             putStrLn "running all bench configurations"
             printExceptions (forM_ configs (runBench p))
         _ -> usage >> exitWith (ExitFailure 1)
+
+parseConfigs :: String -> Maybe [Config]
+parseConfigs xs =
+  let cs = splitOn "," xs
+  in  mapM findConfig cs
+  where
+    findConfig cfg = L.find (\c -> configName c == cfg) configs
 
 printExceptions :: IO a -> IO a
 printExceptions x = x `E.catch` \(e::E.SomeException) ->
