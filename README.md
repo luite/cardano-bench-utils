@@ -67,9 +67,15 @@ corresponding `config/generated/libs-orig.project` and
 cabal run localize-dependencies
 ```
 
+This uses the GHC version in the PATH to resolve the dependencies of
+the `cardano-node` executable. The package has been tested with GHC 9.6
+as the GHC version for `localize-dependencies`.
+
 Note: You may need to add more packages to the `excludedPackages` list
 in `localize-dependencies/Main.hs`, for example if the `cardano-node`
 repository adds more packages or if a new dependency cycle is introduced.
+You may also need to update `configs/include/default.project` to allow
+the solver to make a plan for all compiler versions.
 
 # Usage
 
@@ -92,9 +98,6 @@ This package is experimental and was put together quickly during an
 investigation of `cardano-node` performance. There are some implementation
 notes/remarks.
 
-- I'm not sure if we always get a complete package list with
-  `localize-dependencies`, perhaps we can force it to use an empty package db
-  to start
 - We need some fixes to `ghc-events` to correctly parse/emit GHC 9.6 events.
   Build `filterlog` and `eventlog2html` against this version!
 - More postprocessing is needed, and cleaning of the results.

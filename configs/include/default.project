@@ -2,6 +2,9 @@
 -- these are included in all benchmark configurations
 
 
+allow-older:
+  text-builder-dev:time
+
 program-options
   ghc-options: -Wwarn
 
