@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-
     Some utilities that are not specific to a single program
  -}
@@ -10,11 +11,13 @@ import System.Directory
 import Control.Exception
 import System.IO
 import Data.Char
+import qualified Control.Exception as E
+import qualified System.IO.Error as E
 
 removeItemIfExists :: FilePath -> IO ()
-removeItemIfExists file = do
-    exists <- doesPathExist file
-    when exists (removePathForcibly file)
+removeItemIfExists file =
+    removePathForcibly file `E.catch` \(e::E.IOError) ->
+      if E.isDoesNotExistError e then pure () else E.throwIO e
 
 runIn :: FilePath -> FilePath -> Maybe FilePath -> [String] -> IO ()
 runIn working_dir pgm mb_stdout args = do -- pure ()
